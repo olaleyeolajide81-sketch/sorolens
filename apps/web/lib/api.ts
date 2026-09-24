@@ -15,6 +15,8 @@ import type {
   StorageResponse,
   TimeWindow,
   TrackContractRequest,
+  UptimeResponse,
+  UptimeWindow,
   WatchdogStats,
   CreateSubscriptionRequest,
   SubscriptionsResponse,
@@ -263,6 +265,19 @@ export function listAlerts(
     ? `/api/v1/watchdog/contracts/${contractId}/alerts`
     : `/api/v1/watchdog/alerts`;
   return fetchJson<AlertsResponse>(`${API_URL}${path}${qs ? "?" + qs : ""}`);
+}
+
+/**
+ * Fetches the uptime percentage for a monitored contract over a given window.
+ * window: "24h" | "7d" | "30d" (defaults to "24h" on the server if omitted).
+ */
+export function getContractUptime(
+  contractId: string,
+  window: UptimeWindow = "24h",
+): Promise<UptimeResponse> {
+  return fetchJson<UptimeResponse>(
+    `${API_URL}/api/v1/watchdog/contracts/${contractId}/uptime?window=${window}`,
+  );
 }
 
 // ---- subscriptions --------------------------------------------------------

@@ -1039,6 +1039,40 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  /api/v1/watchdog/contracts/{id}/uptime:
+    get:
+      tags: [Watchdog]
+      summary: Get uptime percentage for a monitored contract
+      description: |
+        Returns the uptime percentage for a monitored contract over the requested
+        time window. Uptime is computed as `healthy_checks / total_checks × 100`
+        where health checks within the window with `status = "Healthy"` count as
+        healthy. Returns `0` when no health checks are found in the window.
+      operationId: getContractUptime
+      security:
+        - ApiKeyAuth: [read:watchdog]
+      parameters:
+        - $ref: "#/components/parameters/ContractID"
+        - name: window
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [24h, 7d, 30d]
+            default: 24h
+          description: Time window for uptime calculation.
+      responses:
+        "200":
+          description: Uptime percentage for the contract
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UptimeResult"
+        "422":
+          $ref: "#/components/responses/InvalidInput"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -1534,6 +1568,27 @@ components:
         timestamp:
           type: string
           format: date-time
+
+    UptimeResult:
+      type: object
+      required: [contract_id, window, uptime_pct]
+      properties:
+        contract_id:
+          type: string
+          description: The contract ID this uptime figure applies to.
+        window:
+          type: string
+          enum: [24h, 7d, 30d]
+          description: The time window over which uptime was computed.
+        uptime_pct:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+          description: |
+            Uptime percentage with up to two decimal places.
+            Computed as healthy_checks / total_checks × 100.
+            Returns 0 when no health checks were recorded in the window.
 
     MonitoredContract:
       type: object
