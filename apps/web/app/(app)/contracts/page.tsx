@@ -14,6 +14,7 @@ import {
 } from "@/lib/optimisticTrack";
 import type { ContractRow } from "@/lib/optimisticTrack";
 import { TableSkeleton } from "@/components/Skeleton";
+import { OPEN_TRACK_MODAL_EVENT } from "@/components/CommandPalette";
 
 // RBAC identity: same localStorage key the watchlist page uses, so the UI
 // registers a contract under the same user identity. Must map to a user
@@ -292,6 +293,15 @@ export default function ContractsPage() {
 
   // Modal state
   const [showModal, setShowModal] = useState(false);
+
+  // Listen for the global command-palette "Track contract" command so that
+  // Cmd+K → "Track contract" opens the modal even when the page is already
+  // mounted (the command palette navigates here and then fires this event).
+  useEffect(() => {
+    const handler = () => setShowModal(true);
+    window.addEventListener(OPEN_TRACK_MODAL_EVENT, handler);
+    return () => window.removeEventListener(OPEN_TRACK_MODAL_EVENT, handler);
+  }, []);
 
   // Track state: one request in flight at a time, errors surface as a toast.
   const [trackPending, setTrackPending] = useState(false);
