@@ -14,6 +14,7 @@ import {
 } from "@/lib/optimisticTrack";
 import type { ContractRow } from "@/lib/optimisticTrack";
 import { TableSkeleton } from "@/components/Skeleton";
+import { OPEN_TRACK_MODAL_EVENT } from "@/components/CommandPalette";
 
 // RBAC identity: same localStorage key the watchlist page uses, so the UI
 // registers a contract under the same user identity. Must map to a user
@@ -68,6 +69,32 @@ function formatDate(iso: string) {
     month: "short",
     day: "numeric",
   });
+}
+
+function formatRelativeTime(iso: string, now = Date.now()) {
+  const diffSeconds = Math.max(0, Math.floor((now - new Date(iso).getTime()) / 1000));
+  if (diffSeconds < 60) return "just now";
+  const minutes = Math.floor(diffSeconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+function RelativeTime({ iso }: { iso: string | null }) {
+  const [, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  if (!iso) {
+    return <span className="text-[var(--color-text-secondary)]">No activity</span>;
+  }
+
+  return <span>{formatRelativeTime(iso)}</span>;
 }
 
 // ---------------------------------------------------------------------------
@@ -136,6 +163,7 @@ function TrackContractModal({ onClose, onSubmit }: TrackModalProps) {
             onClick={onClose}
             className="rounded-md p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
             aria-label="Close modal"
+            title="Close modal"
           >
             ✕
           </button>
@@ -264,6 +292,16 @@ const COLUMNS: Column<ContractRow>[] = [
       </span>
     ),
   },
+  {
+    key: "last_activity_at",
+    header: "Last activity",
+    sortable: true,
+    accessor: (c) => (
+      <span className="text-xs text-[var(--color-text-secondary)]">
+        <RelativeTime iso={c.last_activity_at} />
+      </span>
+    ),
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -292,6 +330,15 @@ export default function ContractsPage() {
 
   // Modal state
   const [showModal, setShowModal] = useState(false);
+
+  // Listen for the global command-palette "Track contract" command so that
+  // Cmd+K → "Track contract" opens the modal even when the page is already
+  // mounted (the command palette navigates here and then fires this event).
+  useEffect(() => {
+    const handler = () => setShowModal(true);
+    window.addEventListener(OPEN_TRACK_MODAL_EVENT, handler);
+    return () => window.removeEventListener(OPEN_TRACK_MODAL_EVENT, handler);
+  }, []);
 
   // Track state: one request in flight at a time, errors surface as a toast.
   const [trackPending, setTrackPending] = useState(false);
