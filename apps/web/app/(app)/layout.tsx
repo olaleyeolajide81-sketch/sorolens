@@ -1,12 +1,8 @@
-"use client";
-
+import { ThemeToggle } from "@/components/ThemeToggle";
 import Link from "next/link";
 import { NetworkProvider } from "@/lib/network";
 import { NetworkSelector } from "@/components/NetworkSelector";
-import { CommandPalette, useCommandPalette } from "@/components/CommandPalette";
-
-function AppShell({ children }: { children: React.ReactNode }) {
-  const { open, setOpen } = useCommandPalette();
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 
   return (
     <NetworkProvider>
@@ -26,6 +22,12 @@ function AppShell({ children }: { children: React.ReactNode }) {
                 className="text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]"
               >
                 Contracts
+              </Link>
+              <Link
+                href="/events"
+                className="text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]"
+              >
+                Events
               </Link>
               <Link
                 href="/watchdog"
@@ -66,9 +68,14 @@ function AppShell({ children }: { children: React.ReactNode }) {
               </kbd>
             </button>
             <NetworkSelector />
+            <ThemeToggle />
           </div>
         </header>
+        <Breadcrumbs />
         <main>{children}</main>
+        <footer className="mt-12 border-t border-[var(--color-border)] pt-6 text-sm text-[var(--color-text-secondary)]">
+          Built for the Stellar developer community.
+        </footer>
       </div>
 
       {open && (
